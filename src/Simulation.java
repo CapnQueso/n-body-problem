@@ -32,28 +32,30 @@ public class Simulation {
 
     public static void main(String[] args) throws IOException {
         Simulation sim = new Simulation();
-        PrintWriter writer = new PrintWriter(new FileWriter("C:\\Users\\1047795\\OneDrive - Lake Washington School District\\LWHS.23-27\\Grade 11 25-26\\Data Structures\\School VSC workspace\\3d-graphing-test\\src\\positions.txt"));
+        PrintWriter writer = new PrintWriter(new FileWriter("/home/queso/Documents/Coding projects/3d-graphing-test/src/positions.txt"));
 
-        Star sun = new Star("Sol", 1.0, 1.0, 1.0, 5778);
+        Star sun = new Star("Sol", 2.0, 1.0, 1.0, 5778);
         sun.setX(0.0);
         sun.setY(0.0);
         sun.setZ(0.0);
 
-        Body earth = new Body("Earth", 5.972e24, 6.371e6, sun, 100000.0, 1.0e14);
+        Body earth = new Body("Earth", 5.972e24, 6.371e6, sun, 1.471e14);
         earth.setZ(1.0e13);
 
-        //Body garth = new Body("Garth", 5.972e24, 6.371e6, sun, 1.471e11);
-        //garth.setX(-1.471e11);
+        Body garth = new Body("Garth", 5.972e24, 6.371e6, sun, 1.471e11);
 
         sim.addBody(sun);
         sim.addBody(earth);
-        //sim.addBody(garth);
+        sim.addBody(garth);
 
         //SimulationFX.launch(sim);
-        for(int i = 0; i < 10000; i++){    
+        
+        for(int i = 0; i < 1000; i++){    
             sim.step(86400);
-            writer.println(earth.getX() + "  " + earth.getY() + "  " + earth.getZ() + "  " + sim.getTime());
+            System.out.println(sun.getX() + "  " + sun.getY() + "  " + sun.getZ() + " | " + earth.getX() + "  " + earth.getY() + "  " + earth.getZ() + " | " + garth.getX() + "  " + garth.getY() + "  " + garth.getZ() + " | " + sim.getTime());
+            writer.println(sun.getX() + "  " + sun.getY() + "  " + sun.getZ() + " | " + earth.getX() + "  " + earth.getY() + "  " + earth.getZ() + " | " + garth.getX() + "  " + garth.getY() + "  " + garth.getZ() + " | " + sim.getTime());
         }
+        
 
         writer.close();
     }
