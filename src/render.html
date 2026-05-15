@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Solar System Visualizer</title>
+    <style>
+        body { margin: 0; background: #050505; color: #eee; font-family: 'Segoe UI', sans-serif; overflow: hidden; display: flex; }
+        /* Sidebar Navigation */
+        #nav-sidebar { width: 200px; background: rgba(15, 15, 15, 0.9); border-right: 1px solid #444; padding: 20px; z-index: 10; }
+        /* Stats Panel */
+        #stats-pane { position: absolute; right: 20px; top: 20px; width: 250px; background: rgba(15, 15, 15, 0.9); 
+                      border: 1px solid #444; border-radius: 8px; padding: 15px; display: none; z-index: 10; }
+        .nav-item { padding: 10px; margin: 5px 0; background: #222; border-radius: 4px; cursor: pointer; text-align: center; transition: 0.2s; }
+        .nav-item:hover { background: #3498db; }
+        h3 { margin-top: 0; color: #3498db; font-size: 16px; }
+        .stat-line { font-size: 13px; margin: 8px 0; border-bottom: 1px solid #333; padding-bottom: 4px; }
+        b { color: #3498db; }
+        #controls { margin-top: 20px; }
+        input[type="file"] { width: 100%; font-size: 11px; }
+    </style>
+</head>
+<body>
+
+    <div id="nav-sidebar">
+        <h3>Navigation</h3>
+        <div id="body-list">
+            <p style="font-size: 12px; color: #888;">Upload positions.txt to start...</p>
+        </div>
+        <div id="controls">
+            <input type="file" id="fileInput" accept=".txt">
+            <button id="playPause" style="width:100%; margin-top:10px; display:none;">Pause</button>
+        </div>
+    </div>
+
+    <div id="stats-pane">
+        <h3 id="stat-name">Body Stats</h3>
+        <div id="stat-content"></div>
+        <button onclick="document.getElementById('stats-pane').style.display='none'" style="width:100%; margin-top:10px;">Close</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        class SimulationRenderer {
+            constructor() {
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.PerspectiveCamera(75, (window.innerWidth - 200) / window.innerHeight, 0.1, 1e15);
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.bodies = [];
+                this.distScale = 1e-10; 
+                this.radiusScale = 5e-7; // Boosted so you can actually see the planets
+
+                this.renderer.setSize(window.innerWidth - 200, window.innerHeight);
+                document.body.appendChild(this.renderer.domElement);
+
+                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+                this.camera.position.set(100, 100, 100);
+                this.scene.add(new THREE.AmbientLight(0x404040, 2));
+                
+                this.targetBody = null;
+                this.animate();
+            }
+
+            createBody(meta, index) {
+                const [name, radius, mass, temp] = meta.split(',');
+                const color = temp ? 0xf1c40f : 0x3498db; // Yellow for stars, blue for planets
+                
+                // Use actual radius from Body class
+                const visualRadius = Math.max(parseFloat(radius) * this.radiusScale, 0.5); 
+                
+                const geometry = new THREE.SphereGeometry(visualRadius, 32, 32);
+                const material = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: temp ? 0.6 : 0.1 });
+                const mesh = new THREE.Mesh(geometry, material);
+                
+                const trailGeom = new THREE.BufferGeometry();
+                const trail = new THREE.Line(trailGeom, new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: 0.3 }));
+
+                const bodyData = { name, radius, mass, temp, mesh, trail, history: [] };
+                this.bodies.push(bodyData);
+                this.scene.add(mesh);
+                this.scene.add(trail);
+
+                // Add to Nav Sidebar
+                const btn = document.createElement('div');
+                btn.className = 'nav-item';
+                btn.innerText = name;
+                btn.onclick = () => this.focusOn(index);
+                document.getElementById('body-list').appendChild(btn);
+            }
+
+            focusOn(index) {
+                this.targetBody = this.bodies[index];
+                const stats = document.getElementById('stats-pane');
+                const content = document.getElementById('stat-content');
+                stats.style.display = 'block';
+                document.getElementById('stat-name').innerText = this.targetBody.name;
+                
+                content.innerHTML = `
+                    <div class="stat-line"><b>Mass:</b> ${Number(this.targetBody.mass).toExponential(2)} kg</div>
+                    <div class="stat-line"><b>Radius:</b> ${Math.round(this.targetBody.radius / 1000)} km</div>
+                    ${this.targetBody.temp ? `<div class="stat-line"><b>Temp:</b> ${this.targetBody.temp} K</div>` : ''}
+                `;
+            }
+
+            update(line) {
+                const segments = line.split('|').map(s => s.trim());
+                const time = segments.pop();
+
+                segments.forEach((seg, i) => {
+                    const coords = seg.split(/\s+/).filter(v => v !== "").map(Number);
+                    if (coords.length < 3 || !this.bodies[i]) return;
+
+                    const [x, y, z] = coords.map(c => c * this.distScale);
+                    this.bodies[i].mesh.position.set(x, y, z);
+
+                    this.bodies[i].history.push(new THREE.Vector3(x, y, z));
+                    if (this.bodies[i].history.length > 300) this.bodies[i].history.shift();
+                    this.bodies[i].trail.geometry.setFromPoints(this.bodies[i].history);
+                });
+
+                if (this.targetBody) {
+                    this.controls.target.copy(this.targetBody.mesh.position);
+                }
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                this.controls.update();
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        const view = new SimulationRenderer();
+        let frames = [];
+        let currentFrame = 0;
+        let playing = false;
+
+        document.getElementById('fileInput').onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const allLines = reader.result.split('\n');
+                const metaLine = allLines.find(l => l.startsWith('#METADATA'));
+                
+                if (metaLine) {
+                    document.getElementById('body-list').innerHTML = '';
+                    metaLine.split('|').slice(1, -1).forEach((m, i) => view.createBody(m, i));
+                }
+
+                frames = allLines.filter(l => l.includes('|') && !l.startsWith('#'));
+                playing = true;
+                document.getElementById('playPause').style.display = 'block';
+                playLoop();
+            };
+            reader.readAsText(e.target.files[0]);
+        };
+
+        function playLoop() {
+            if (!playing || currentFrame >= frames.length) return;
+            view.update(frames[currentFrame++]);
+            setTimeout(playLoop, 30);
+        }
+
+        document.getElementById('playPause').onclick = (e) => {
+            playing = !playing;
+            e.target.innerText = playing ? "Pause" : "Play";
+            if (playing) playLoop();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Orbit Simulation Viewer</title>
+    <style>
+        body { margin: 0; background: #000; color: white; font-family: sans-serif; overflow: hidden; }
+        #ui { position: absolute; top: 10px; left: 10px; z-index: 10; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        <h3>Sim Visualizer</h3>
+        <input type="file" id="fileInput" accept=".txt"><br><br>
+        <div id="status">Upload positions.txt to start</div>
+    </div>
+    <div id="container"></div>
+
+    <script type="module">
+        import SimulationView from './visualizer.js';
+        const view = new SimulationView('container');
+        
+        document.getElementById('fileInput').onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const lines = reader.result.split('\n');
+                let currentFrame = 0;
+                
+                setInterval(() => {
+                    if (currentFrame < lines.length) {
+                        const coords = view.parseLine(lines[currentFrame]);
+                        view.updatePositions(coords);
+                        currentFrame++;
+                    }
+                }, 16); // ~60fps playback
+            };
+            reader.readAsText(e.target.files[0]);
+        };
+    </script>
+</body>
+</html>

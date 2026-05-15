@@ -1,3 +1,4 @@
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -5,9 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Multi-body simulation main simulation runner class
- * using 3d graphics to make it look pretty
- * 
+ * Multi-body simulation main simulation runner class using 3d graphics to make
+ * it look pretty
+ *
  * @author capnqueso
  * @date 5/4/26
  */
@@ -24,15 +25,15 @@ public class Simulation {
     private List<Body> bodies = new ArrayList<>();
 
     /**
-     * Time passed in the simulation (in seconds)
-     * This will be used to calculate positions of bodies in orbit, and will be able
-     * to be set and got
+     * Time passed in the simulation (in seconds) This will be used to calculate
+     * positions of bodies in orbit, and will be able to be set and got
      */
     private double time;
 
     public static void main(String[] args) throws IOException {
         Simulation sim = new Simulation();
-        PrintWriter writer = new PrintWriter(new FileWriter("/home/queso/Documents/Coding projects/3d-graphing-test/src/positions.txt"));
+        PrintWriter writer = new PrintWriter(new FileWriter("C:\\Users\\1047795\\OneDrive - Lake Washington School District\\LWHS.23-27\\Grade 11 25-26\\Data Structures\\School VSC workspace\\3d-graphing-test\\src\\positions.txt"));
+        //PrintWriter writer = new PrintWriter(new FileWriter("/home/queso/Documents/Coding projects/3d-graphing-test/src/positions.txt"));
 
         Star sun = new Star("Sol", 2.0, 1.0, 1.0, 5778);
         sun.setX(0.0);
@@ -48,14 +49,21 @@ public class Simulation {
         sim.addBody(earth);
         sim.addBody(garth);
 
+        StringBuilder header = new StringBuilder("#METADATA|");
+        for (Body b : sim.getBodies()) {
+            header.append(b.getName()).append(",").append(b.getRadius()).append(",").append(b.getMass());
+            if (b instanceof Star) {
+                header.append(",").append(((Star) b).getTemperature()); //
+            }
+            header.append("|");
+        }
+        writer.println(header.toString());
+
         //SimulationFX.launch(sim);
-        
-        for(int i = 0; i < 1000; i++){    
+        for (int i = 0; i < 1000000; i++) {
             sim.step(86400);
-            System.out.println(sun.getX() + "  " + sun.getY() + "  " + sun.getZ() + " | " + earth.getX() + "  " + earth.getY() + "  " + earth.getZ() + " | " + garth.getX() + "  " + garth.getY() + "  " + garth.getZ() + " | " + sim.getTime());
             writer.println(sun.getX() + "  " + sun.getY() + "  " + sun.getZ() + " | " + earth.getX() + "  " + earth.getY() + "  " + earth.getZ() + " | " + garth.getX() + "  " + garth.getY() + "  " + garth.getZ() + " | " + sim.getTime());
         }
-        
 
         writer.close();
     }
@@ -122,7 +130,6 @@ public class Simulation {
     }
 
     // get set
-
     public void addBody(Body b) {
         bodies.add(b);
     }
