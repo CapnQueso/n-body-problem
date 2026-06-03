@@ -448,24 +448,35 @@ public class Body {
             return;
 
         Body parent = (Body) orbits;
-        double mu = 6.674e-11 * parent.getMass();
+        final double G = 6.674e-11;
+        double mu = G * parent.getMass();
+
         double a = (perigee + apogee) / 2.0;
         double r = perigee;
 
-        double speed = Math.sqrt(mu * (2.0 / r - 1.0 / a));
+        double speed;
+        if (Math.abs(apogee - perigee) < 1e-9) {
+            speed = Math.sqrt(mu / r);
+        } else {
+            speed = Math.sqrt(mu * (2.0 / r - 1.0 / a));
+        }
 
-        // At perigee, we set the speed vector in a random direction perpendicular to the radius vector.
-        double orbitalAngle = Math.random() * 360;
-        double angleRad = Math.toRadians(orbitalAngle);
-        vx = -speed * Math.sin(angleRad);
-        vy = speed * Math.cos(angleRad);
-        vz = 0; 
-
-        // Set starting position at random angle perigee distance from parent
-        double positionAngle = Math.random() * 360;
-        double positionRad = Math.toRadians(positionAngle);
-        x = parent.getX() + r * Math.cos(positionRad);
-        y = parent.getY() + r * Math.sin(positionRad);
+        // Place child at a random angle around parent
+        double positionAngle = Math.random() * 2.0 * Math.PI;
+        x = parent.getX() + r * Math.cos(positionAngle);
+        y = parent.getY() + r * Math.sin(positionAngle);
         z = parent.getZ();
+
+        // ALWAYS orbit counter-clockwise (prograde) so moons stay bound.
+        // Random direction caused moons to escape in some N-body configurations.
+        double tx = -Math.sin(positionAngle);
+        double ty =  Math.cos(positionAngle);
+
+        // Inherit parent's velocity so the moon orbits the parent, not the origin.
+        // Without this, the moon's absolute velocity doesn't account for the parent
+        // already moving through space, causing it to fall toward Sol.
+        vx = parent.getVelocityX() + speed * tx;
+        vy = parent.getVelocityY() + speed * ty;
+        vz = parent.getVelocityZ();
     }
 }

@@ -1,7 +1,4 @@
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,88 +28,69 @@ public class Simulation {
     private double time;
 
     private static final double AU = 1.496e11; // Astronomical unit in meters
+    private static final double SOFTENING = 1e3; // meters, small softening avoids singularities
 
     // MAKE SURE THIS FILEPATH IS CORRECT
     private static final String DIR = "src/"; // Directory for output files
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws Exception {
+        SimBroadcaster bc = new SimBroadcaster("localhost", 9000);
+        bc.setStepSkip(1);
+
+        while (true) {                          // outer loop — restarts on reset
+            bc.resetRequested = false;
+            Simulation sim = buildSolarSystem(bc);
+
+            final double BASE_DT = 3600.0;
+            while (!bc.resetRequested) {        // inner loop — normal sim
+                double mult = bc.speedMultiplier;
+                double dt = BASE_DT * mult;
+                int stepsPerFrame = 1;
+                if (dt > 86400 * 7) {
+                    stepsPerFrame = (int) Math.min(500, dt / (86400 * 7));
+                    dt = BASE_DT * mult / stepsPerFrame;
+                }
+                for (int s = 0; s < stepsPerFrame; s++) sim.step(dt);
+                bc.send(sim.getBodies(), sim.getTime());
+                Thread.sleep(16);
+            }
+            System.out.println("[SIM] resetting...");
+        }
+    }
+
+    /** Builds and returns a fresh Simulation with all bodies added. */
+    private static Simulation buildSolarSystem(SimBroadcaster bc) {
         Simulation sim = new Simulation();
 
-        // Setup your system using true physical units
-        Star sun = new Star("Sol", 1.989e30, 6.957e8, 0.0, 0.0, 0.0, 1.0, 5778);
-        Body earth = new Body("Earth", 5.972e24, 6.371e6, sun, AU);
-        Body mars = new Body("Mars", 6.39e23, 3.389e6, sun, 1.52368055 * AU);
+        Star sol = new Star("Sol", 1.0, 1.0, 1.0, 5778);
+        sim.addBody(sol);
 
-        sim.addBody(sun);
-        sim.addBody(earth);
-        sim.addBody(mars);
+        Body mercury  = new Body("Mercury",  3.285e23, 2.440e6, sol, 0.387 * AU);
+        Body venus    = new Body("Venus",    4.867e24, 6.052e6, sol, 0.723 * AU);
+        Body earth    = new Body("Earth",    5.972e24, 6.371e6, sol, 1.000 * AU);
+        Body mars     = new Body("Mars",     6.390e23, 3.390e6, sol, 1.524 * AU);
+        Body jupiter  = new Body("Jupiter",  1.898e27, 6.991e7, sol, 5.203 * AU);
+        Body saturn   = new Body("Saturn",   5.683e26, 5.823e7, sol, 9.537 * AU);
+        Body uranus   = new Body("Uranus",   8.681e25, 2.536e7, sol, 19.19 * AU);
+        Body neptune  = new Body("Neptune",  1.024e26, 2.462e7, sol, 30.07 * AU);
 
-        // WRITE METADATA ONCE
-        try (PrintWriter metaWriter = new PrintWriter(new FileWriter(DIR + "metadata.txt"))) {
-            StringBuilder sb = new StringBuilder();
-            for (Body b : sim.bodies) {
-                String type = "PLANET";
-                double temp = 0.0;
-                double lum = 0.0;
+        sim.addBody(mercury); sim.addBody(venus); sim.addBody(earth);
+        sim.addBody(mars);    sim.addBody(jupiter); sim.addBody(saturn);
+        sim.addBody(uranus);  sim.addBody(neptune);
 
-                if (b instanceof Star) {
-                    type = "STAR";
-                    Star s = (Star) b;
-                    temp = s.getTemperature();
-                    lum = s.getLuminosity();
-                }
+        // Moons
+        sim.addBody(new Body("Moon",      7.342e22, 1.737e6, earth,   3.844e8));
+        sim.addBody(new Body("Phobos",    1.066e16, 1.130e4, mars,    9.376e6));
+        sim.addBody(new Body("Deimos",    1.476e15, 6.200e3, mars,    2.346e7));
+        sim.addBody(new Body("Io",        8.932e22, 1.822e6, jupiter, 4.216e8));
+        sim.addBody(new Body("Europa",    4.800e22, 1.561e6, jupiter, 6.709e8));
+        sim.addBody(new Body("Ganymede",  1.482e23, 2.634e6, jupiter, 1.070e9));
+        sim.addBody(new Body("Callisto",  1.076e23, 2.410e6, jupiter, 1.883e9));
+        sim.addBody(new Body("Titan",     1.345e23, 2.575e6, saturn,  1.222e9));
+        sim.addBody(new Body("Enceladus", 1.080e20, 2.521e5, saturn,  2.380e8));
+        sim.addBody(new Body("Rhea",      2.307e21, 7.640e5, saturn,  5.270e8));
 
-                sb.append(type).append(",")
-                        .append(b.getName()).append(",")
-                        .append(b.getRadius()).append(",")
-                        .append(b.getMass()).append(",")
-                        .append(temp).append(",")
-                        .append(lum).append("|");
-            }
-            metaWriter.print(sb.toString());
-            metaWriter.flush();
-        } catch (IOException e) {
-            System.err.println("Error writing metadata file: " + e.getMessage());
-        }
-
-        System.out.println("Simulation running... Open index.html to view live.");
-
-        double activeTimeStep = 3600.0; // Default fallback to 1 hour step value
-        java.io.File timestepFile = new java.io.File(DIR + "timestep.txt");
-
-        // LIVE LOOP
-        while (true) {
-            // Check if Python dropped a new timestep configuration file down
-            if (timestepFile.exists() && timestepFile.canRead()) {
-                try (java.util.Scanner sc = new java.util.Scanner(timestepFile)) {
-                    if (sc.hasNextDouble()) {
-                        activeTimeStep = sc.nextDouble();
-                    }
-                } catch (Exception e) {
-                    // Fail silently to avoid stopping the loop if python was actively writing to
-                    // the file
-                }
-            }
-
-            // Advance the orbital universe calculations using our dynamic velocity step
-            // size!
-            sim.step(activeTimeStep);
-
-            // Overwrite live.txt every frame
-            try (PrintWriter writer = new PrintWriter(new FileWriter(DIR + "live.txt"))) {
-                StringBuilder line = new StringBuilder();
-                for (Body b : sim.bodies) {
-                    line.append(b.getX()).append(" ").append(b.getY()).append(" ").append(b.getZ()).append("|");
-                }
-                line.append(sim.time);
-                writer.println(line.toString());
-            } catch (IOException e) {
-                // Skip frame write collision conflict mitigations
-            }
-
-            // Limit calculation frequency overhead
-            Thread.sleep(10);
-        }
+        return sim;
     }
 
     /**
@@ -120,17 +98,23 @@ public class Simulation {
      * O(n²) per step
      */
     public void step(double dt) {
-        // Update positions using current vel and acc
+        // If this is the first timestep, compute initial accelerations.
+        // This makes Velocity Verlet stable for bodies already in motion.
+        if (time == 0) {
+            computeAccelerations();
+        }
+
+        // Update positions using current velocity and acceleration.
         for (Body b : bodies) {
             b.setX(b.getX() + b.getVelocityX() * dt + 0.5 * b.getAccX() * dt * dt);
             b.setY(b.getY() + b.getVelocityY() * dt + 0.5 * b.getAccY() * dt * dt);
             b.setZ(b.getZ() + b.getVelocityZ() * dt + 0.5 * b.getAccZ() * dt * dt);
         }
 
-        // Compute new accelerations from new positions
+        // Compute new accelerations from updated positions.
         computeAccelerations();
 
-        // Update velocities using average of old and new acc
+        // Update velocities using average of old and new acceleration values.
         for (Body b : bodies) {
             b.setVelocityX(b.getVelocityX() + 0.5 * (b.getAccPrevX() + b.getAccX()) * dt);
             b.setVelocityY(b.getVelocityY() + 0.5 * (b.getAccPrevY() + b.getAccY()) * dt);
@@ -141,13 +125,13 @@ public class Simulation {
     }
 
     private void computeAccelerations() {
-        // Save old acc, zero out new
+        // Save old accelerations, then reset to zero before summing new contributions.
         for (Body bi : bodies) {
-            bi.saveAcc(); // copies acc
+            bi.saveAcc();
             bi.zeroAcc();
         }
 
-        // Newton's third law lets us do half the pairs
+        // Newton's third law allows half the pairs to be computed.
         for (int i = 0; i < bodies.size(); i++) {
             Body bi = bodies.get(i);
             for (int j = i + 1; j < bodies.size(); j++) {
@@ -157,14 +141,15 @@ public class Simulation {
                 double dy = bj.getY() - bi.getY();
                 double dz = bj.getZ() - bi.getZ();
 
-                double r2 = dx * dx + dy * dy + dz * dz;
+                double r2 = dx * dx + dy * dy + dz * dz + SOFTENING * SOFTENING;
+                if (r2 == 0) {
+                    continue;
+                }
+
                 double r = Math.sqrt(r2);
                 double r3 = r2 * r;
-
-                // Shared factor avoids computing G twice per pair
                 double f = G / r3;
 
-                // bi pulled toward bj, bj pulled toward bi (equal and opposite)
                 bi.addAcc(f * bj.getMass() * dx,
                         f * bj.getMass() * dy,
                         f * bj.getMass() * dz);

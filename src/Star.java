@@ -43,19 +43,13 @@ public class Star extends Body {
     private static final double solarRadius = 6.957e8;
 
     /**
-     * Free-floating star with full motion vector
-     */
-    public Star(String name, Double mass, Double radius, Double velocity, Double angleX, Double angleY,
-            Double brightness, double temperature) {
-        super(name, mass * solarMass, radius * solarRadius); // free floating, set vx, vy, vz later
-        this.brightness = brightness;
-        this.temperature = temperature;
-        this.luminosity = calcLuminosity(temperature, radius * solarRadius);
-        this.spectralClass = calcSpectralClass(temperature);
-    }
-
-    /**
      * Free-floating star, motion unknown or to be calculated later
+     * 
+     * @param name the name of the star
+     * @param mass the mass of the star in solar masses
+     * @param radius the radius of the star in solar radii
+     * @param brightness the brightness of the star (for display)
+     * @param temperature the temperature of the star in Kelvin (for display and spectral class calculation)
      */
     public Star(String name, Double mass, Double radius, Double brightness, double temperature) {
         super(name, mass * solarMass, radius * solarRadius);
@@ -68,6 +62,15 @@ public class Star extends Body {
     /**
      * Orbiting star with elliptical orbit
      * (e.g. binary star systems)
+     * 
+     * @param name the name of the star
+     * @param mass the mass of the star in solar masses
+     * @param radius the radius of the star in solar radii
+     * @param orbits the body this star orbits (can be null for free-floating)
+     * @param perigee the closest distance to the body it orbits (in meters)
+     * @param apogee the farthest distance from the body it orbits (in meters)
+     * @param brightness the brightness of the star (for display)
+     * @param temperature the temperature of the star in Kelvin (for display and spectral class calculation)
      */
     public Star(String name, Double mass, Double radius, Body orbits, Double perigee, Double apogee,
             Double brightness, double temperature) {
@@ -80,6 +83,14 @@ public class Star extends Body {
 
     /**
      * Orbiting star with circular orbit
+     * 
+     * @param name the name of the star
+     * @param mass the mass of the star in solar masses
+     * @param radius the radius of the star in solar radii
+     * @param orbits the body this star orbits (can be null for free-floating)
+     * @param altitude the distance from the body it orbits (in meters)
+     * @param brightness the brightness of the star (for display)
+     * @param temperature the temperature of the star in Kelvin (for display and spectral class calculation
      */
     public Star(String name, Double mass, Double radius, Body orbits, Double altitude,
             Double brightness, double temperature) {
