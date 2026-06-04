@@ -1,567 +1,783 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>N-Body Simulation Viewer</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:#000;color:#fff;font-family:'Segoe UI',system-ui,sans-serif;overflow:hidden;height:100vh}
-canvas{display:block}
-#topbar{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;gap:12px;
-  padding:10px 16px;background:rgba(0,0,0,.55);backdrop-filter:blur(8px);
-  border-bottom:1px solid rgba(255,255,255,.08);pointer-events:all}
-#topbar h1{font-size:13px;font-weight:500;letter-spacing:.06em;color:rgba(255,255,255,.7);white-space:nowrap}
-#status{font-size:11px;padding:3px 8px;border-radius:12px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);transition:all .3s}
-#status.connected{background:rgba(60,210,100,.15);color:#3cd264}
-#status.error{background:rgba(255,60,60,.15);color:#ff6060}
-#simtime{font-size:11px;color:rgba(255,255,255,.4);margin-left:auto}
-#speedinfo{font-size:11px;color:rgba(255,255,255,.35)}
-#bodylist{position:fixed;top:52px;left:0;width:200px;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);
-  border-right:1px solid rgba(255,255,255,.06);pointer-events:all;overflow-y:auto;max-height:calc(100vh - 52px)}
-.body-item{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;transition:background .15s;font-size:12px;color:rgba(255,255,255,.6)}
-.body-item:hover{background:rgba(255,255,255,.07)}
-.body-item.active{background:rgba(255,255,255,.1);color:#fff}
-.body-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.body-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.body-type{font-size:10px;color:rgba(255,255,255,.28)}
-#infopanel{position:fixed;bottom:16px;left:216px;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);
-  border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px 14px;min-width:200px;font-size:11px;
-  pointer-events:none;opacity:0;transition:opacity .3s}
-#infopanel.visible{opacity:1}
-#infopanel .label{color:rgba(255,255,255,.35);margin-top:6px}
-#infopanel .val{color:rgba(255,255,255,.85);font-variant-numeric:tabular-nums}
-#infopanel .iname{font-size:14px;font-weight:500;color:#fff;margin-bottom:4px}
-#controls-hint{position:fixed;bottom:16px;right:16px;font-size:10px;color:rgba(255,255,255,.25);text-align:right;line-height:1.8;pointer-events:none}
-#rightpanel{position:fixed;top:52px;right:0;display:flex;flex-direction:column;
-  background:rgba(0,0,0,.5);backdrop-filter:blur(8px);
-  border-left:1px solid rgba(255,255,255,.06);pointer-events:all;min-width:160px}
-#trailbtn{padding:10px 14px;font-size:11px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s;
-  border-bottom:1px solid rgba(255,255,255,.06)}
-#trailbtn:hover{color:#fff}
-#trailbtn.on{color:rgba(120,200,255,.8)}
-#orbitbtn{padding:10px 14px;font-size:11px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s;
-  border-bottom:1px solid rgba(255,255,255,.06)}
-#orbitbtn:hover{color:#fff}
-#orbitbtn.on{color:rgba(160,220,130,.8)}
-#resetbtn{padding:10px 14px;font-size:11px;color:rgba(255,100,100,.6);cursor:pointer;transition:color .2s;
-  border-bottom:1px solid rgba(255,255,255,.06)}
-#resetbtn:hover{color:rgba(255,120,120,1)}
-#speedctl{padding:10px 14px}
-#speedctl label{font-size:10px;color:rgba(255,255,255,.35);display:block;margin-bottom:6px;letter-spacing:.05em}
-#speedctl input[type=range]{width:100%;accent-color:rgba(120,200,255,.7)}
-#speedctl .speedval{font-size:11px;color:rgba(120,200,255,.8);text-align:center;margin-top:4px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>N-Body Simulation Viewer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
+    }
+
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      overflow: hidden;
+      height: 100vh
+    }
+
+    canvas {
+      display: block
+    }
+
+    #topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: rgba(0, 0, 0, .55);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      pointer-events: all
+    }
+
+    #topbar h1 {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: .06em;
+      color: rgba(255, 255, 255, .7);
+      white-space: nowrap
+    }
+
+    #status {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .07);
+      color: rgba(255, 255, 255, .5);
+      transition: all .3s
+    }
+
+    #status.connected {
+      background: rgba(60, 210, 100, .15);
+      color: #3cd264
+    }
+
+    #status.error {
+      background: rgba(255, 60, 60, .15);
+      color: #ff6060
+    }
+
+    #simtime {
+      font-size: 11px;
+      color: rgba(255, 255, 255, .4);
+      margin-left: auto
+    }
+
+    #speedinfo {
+      font-size: 11px;
+      color: rgba(255, 255, 255, .35)
+    }
+
+    #bodylist {
+      position: fixed;
+      top: 52px;
+      left: 0;
+      width: 200px;
+      background: rgba(0, 0, 0, .5);
+      backdrop-filter: blur(8px);
+      border-right: 1px solid rgba(255, 255, 255, .06);
+      pointer-events: all;
+      overflow-y: auto;
+      max-height: calc(100vh - 52px)
+    }
+
+    .body-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: background .15s;
+      font-size: 12px;
+      color: rgba(255, 255, 255, .6)
+    }
+
+    .body-item:hover {
+      background: rgba(255, 255, 255, .07)
+    }
+
+    .body-item.active {
+      background: rgba(255, 255, 255, .1);
+      color: #fff
+    }
+
+    .body-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0
+    }
+
+    .body-name {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    .body-type {
+      font-size: 10px;
+      color: rgba(255, 255, 255, .28)
+    }
+
+    #infopanel {
+      position: fixed;
+      bottom: 16px;
+      left: 216px;
+      background: rgba(0, 0, 0, .6);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 8px;
+      padding: 12px 14px;
+      min-width: 200px;
+      font-size: 11px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .3s
+    }
+
+    #infopanel.visible {
+      opacity: 1
+    }
+
+    #infopanel .label {
+      color: rgba(255, 255, 255, .35);
+      margin-top: 6px
+    }
+
+    #infopanel .val {
+      color: rgba(255, 255, 255, .85);
+      font-variant-numeric: tabular-nums
+    }
+
+    #infopanel .iname {
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      margin-bottom: 4px
+    }
+
+    #controls-hint {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      font-size: 10px;
+      color: rgba(255, 255, 255, .25);
+      text-align: right;
+      line-height: 1.8;
+      pointer-events: none
+    }
+
+    #rightpanel {
+      position: fixed;
+      top: 52px;
+      right: 0;
+      display: flex;
+      flex-direction: column;
+      background: rgba(0, 0, 0, .5);
+      backdrop-filter: blur(8px);
+      border-left: 1px solid rgba(255, 255, 255, .06);
+      pointer-events: all;
+      min-width: 160px
+    }
+
+    #trailbtn {
+      padding: 10px 14px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, .5);
+      cursor: pointer;
+      transition: color .2s;
+      border-bottom: 1px solid rgba(255, 255, 255, .06)
+    }
+
+    #trailbtn:hover {
+      color: #fff
+    }
+
+    #trailbtn.on {
+      color: rgba(120, 200, 255, .8)
+    }
+
+    #orbitbtn {
+      padding: 10px 14px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, .5);
+      cursor: pointer;
+      transition: color .2s;
+      border-bottom: 1px solid rgba(255, 255, 255, .06)
+    }
+
+    #orbitbtn:hover {
+      color: #fff
+    }
+
+    #orbitbtn.on {
+      color: rgba(160, 220, 130, .8)
+    }
+
+    #resetbtn {
+      padding: 10px 14px;
+      font-size: 11px;
+      color: rgba(255, 100, 100, .6);
+      cursor: pointer;
+      transition: color .2s;
+      border-bottom: 1px solid rgba(255, 255, 255, .06)
+    }
+
+    #resetbtn:hover {
+      color: rgba(255, 120, 120, 1)
+    }
+
+    #speedctl {
+      padding: 10px 14px
+    }
+
+    #speedctl label {
+      font-size: 10px;
+      color: rgba(255, 255, 255, .35);
+      display: block;
+      margin-bottom: 6px;
+      letter-spacing: .05em
+    }
+
+    #speedctl input[type=range] {
+      width: 100%;
+      accent-color: rgba(120, 200, 255, .7)
+    }
+
+    #speedctl .speedval {
+      font-size: 11px;
+      color: rgba(120, 200, 255, .8);
+      text-align: center;
+      margin-top: 4px
+    }
+  </style>
 </head>
+
 <body>
-<div id="topbar">
-  <h1>N-BODY SIM</h1>
-  <span id="status">DISCONNECTED</span>
-  <span id="simtime">T+0s</span>
-  <span id="speedinfo"></span>
-</div>
-<div id="bodylist"></div>
-<div id="infopanel">
-  <div class="iname" id="ip-name">—</div>
-  <div class="label">Position (km)</div>
-  <div class="val" id="ip-pos">—</div>
-  <div class="label">Speed (km/s)</div>
-  <div class="val" id="ip-vel">—</div>
-  <div class="label">Mass (kg)</div>
-  <div class="val" id="ip-mass">—</div>
-  <div class="label">Radius (km)</div>
-  <div class="val" id="ip-radius">—</div>
-</div>
-<div id="controls-hint">Drag — orbit &nbsp;|&nbsp; Scroll — zoom<br>Click body — focus &nbsp;|&nbsp; Space — free cam</div>
-<div id="rightpanel">
-  <div id="trailbtn" class="on">TRAILS ●</div>
-  <div id="orbitbtn" class="on">ORBIT RINGS ●</div>
-  <div id="resetbtn">↺ RESET SIM</div>
-  <div id="speedctl">
-    <label>SIM SPEED</label>
-    <input type="range" id="speedslider" min="-3" max="3" step="0.05" value="0">
-    <div class="speedval" id="speedval">1× real-time</div>
+  <div id="topbar">
+    <h1>N-BODY SIM</h1>
+    <span id="status">DISCONNECTED</span>
+    <span id="simtime">T+0s</span>
+    <span id="speedinfo"></span>
   </div>
-</div>
+  <div id="bodylist"></div>
+  <div id="infopanel">
+    <div class="iname" id="ip-name">—</div>
+    <div class="label">Position (km)</div>
+    <div class="val" id="ip-pos">—</div>
+    <div class="label">Speed (km/s)</div>
+    <div class="val" id="ip-vel">—</div>
+    <div class="label">Mass (kg)</div>
+    <div class="val" id="ip-mass">—</div>
+    <div class="label">Radius (km)</div>
+    <div class="val" id="ip-radius">—</div>
+  </div>
+  <div id="controls-hint">Drag — orbit &nbsp;|&nbsp; Scroll — zoom<br>Click body — focus &nbsp;|&nbsp; Space — free cam
+  </div>
+  <div id="rightpanel">
+    <div id="trailbtn" class="on">TRAILS ●</div>
+    <div id="orbitbtn" class="on">ORBIT RINGS ●</div>
+    <div id="resetbtn">↺ RESET SIM</div>
+    <div id="speedctl">
+      <label>SIM SPEED</label>
+      <input type="range" id="speedslider" min="-3" max="3" step="0.05" value="0">
+      <div class="speedval" id="speedval">1× real-time</div>
+    </div>
+  </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>
-const AU = 1.496e11;
-const KM = 1e3;
-const TRAIL_LEN = 4000;
-const TRAIL_SAMPLE = 3;
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    const AU = 1.496e11;
+    const KM = 1e3;
+    const TRAIL_LEN = 4000;
+    const TRAIL_SAMPLE = 3;
 
-const SPECTRAL_COLORS = {
-  'O':0x9bb0ff,'B':0xaabfff,'A':0xcad7ff,'F':0xf8f7ff,
-  'G':0xfff4ea,'K':0xffd2a1,'M':0xffcc6f
-};
-const L_SUN = 3.828e26;
+    const SPECTRAL_COLORS = {
+      'O': 0x9bb0ff, 'B': 0xaabfff, 'A': 0xcad7ff, 'F': 0xf8f7ff,
+      'G': 0xfff4ea, 'K': 0xffd2a1, 'M': 0xffcc6f
+    };
+    const L_SUN = 3.828e26;
 
-function starColorFromLuminosity(lum, sp) {
-  const base = SPECTRAL_COLORS[sp] || SPECTRAL_COLORS['G'];
-  const scale = Math.max(0.4, Math.min(1.0, 0.5 + 0.1*Math.log10(Math.max(1, lum/L_SUN))));
-  return (Math.min(255,((base>>16)&0xff)*scale)|0)<<16 |
-         (Math.min(255,((base>>8)&0xff)*scale)|0)<<8  |
-         (Math.min(255,(base&0xff)*scale)|0);
-}
-
-// Per-body appearance: color bands and emissive tint for atmosphere/surface look
-const BODY_APPEARANCE = {
-  'Mercury': { bands:[0x8c7b6e,0x7a6a5e,0x6b5c50], emissive:0x2a1f18 },
-  'Venus':   { bands:[0xe8d5a3,0xd4b87a,0xc9a855], emissive:0x3d2e10 },
-  'Earth':   { bands:[0x2a6fdb,0x1a5c9e,0x3a8a3a], emissive:0x061828 },
-  'Mars':    { bands:[0xc1440e,0xa3370a,0x8b2d08], emissive:0x2a0d02 },
-  'Jupiter': { bands:[0xc88b5a,0xb87040,0xe0c49a,0xa06030], emissive:0x1a0d00 },
-  'Saturn':  { bands:[0xd4b483,0xc4a060,0xe8cc98,0xb09050], emissive:0x1a1000 },
-  'Uranus':  { bands:[0x7de8e8,0x5dd4d4,0x9ef0f0], emissive:0x003030 },
-  'Neptune': { bands:[0x3f54ba,0x2a3d9e,0x5068d0], emissive:0x000820 },
-  'Moon':    { bands:[0x9a9a8e,0x7a7a6e,0x8a8a7e], emissive:0x080808 },
-  'Phobos':  { bands:[0x7a6858,0x6a5848], emissive:0x080502 },
-  'Deimos':  { bands:[0x7a6858,0x6a5848], emissive:0x080502 },
-  'Io':      { bands:[0xe8c840,0xd4a020,0xf0d860,0xc04820], emissive:0x201000 },
-  'Europa':  { bands:[0xe0d0b8,0xc8b898,0xd8c8a8], emissive:0x101008 },
-  'Ganymede':{ bands:[0x8878a0,0x786890,0x988888], emissive:0x080810 },
-  'Callisto':{ bands:[0x585070,0x484060,0x686080], emissive:0x080810 },
-  'Titan':   { bands:[0xd49040,0xc07820,0xe0a850], emissive:0x201008 },
-  'Enceladus':{ bands:[0xe8e8f0,0xd8d8e8,0xf0f0ff], emissive:0x101018 },
-  'Rhea':    { bands:[0xb0a898,0xa09888,0xc0b8a8], emissive:0x100e0a },
-};
-const FALLBACK_PLANET_COLORS=[0x4a9eff,0xe8c97a,0x5cb85c,0xe06c45,0xb87333,0xffd700,0x7ec8e3,0x5b7fb0,0x6a5acd];
-
-// ── Renderer ───────────────────────────────────────────────────────────────
-const renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.setSize(innerWidth,innerHeight);
-renderer.setClearColor(0x000000);
-document.body.appendChild(renderer.domElement);
-
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 1e4, 1e16);
-camera.position.set(0, 3*AU, 5*AU);
-camera.lookAt(0,0,0);
-
-scene.add(new THREE.AmbientLight(0xffffff, 0.06));
-const sunLight = new THREE.PointLight(0xfff4ea, 3.0, 0);
-scene.add(sunLight);
-
-// ── Starfield ──────────────────────────────────────────────────────────────
-(function(){
-  const N=8000, pos=new Float32Array(N*3), col=new Float32Array(N*3);
-  const pal=[[0.78,0.84,1],[1,0.97,0.9],[1,0.85,0.6],[0.9,0.9,1]];
-  for(let i=0;i<N;i++){
-    const r=400*AU, t=Math.random()*Math.PI*2, p=Math.acos(2*Math.random()-1);
-    pos[i*3]=r*Math.sin(p)*Math.cos(t); pos[i*3+1]=r*Math.sin(p)*Math.sin(t); pos[i*3+2]=r*Math.cos(p);
-    const c=pal[Math.floor(Math.random()*pal.length)], b=.4+Math.random()*.6;
-    col[i*3]=c[0]*b; col[i*3+1]=c[1]*b; col[i*3+2]=c[2]*b;
-  }
-  const g=new THREE.BufferGeometry();
-  g.setAttribute('position',new THREE.BufferAttribute(pos,3));
-  g.setAttribute('color',new THREE.BufferAttribute(col,3));
-  const pts=new THREE.Points(g,new THREE.PointsMaterial({size:1.2e9,vertexColors:true,sizeAttenuation:true}));
-  pts.frustumCulled=false;
-  scene.add(pts);
-})();
-
-// ── Camera controls ────────────────────────────────────────────────────────
-let isDragging=false, prevMouse={x:0,y:0};
-let camTheta=Math.atan2(5,3), camPhi=Math.PI/3, camDist=7*AU;
-let sCamTheta=camTheta, sCamPhi=camPhi, sCamDist=camDist;
-let camTarget=new THREE.Vector3(), freeCam=false;
-const CAM_SMOOTH=0.12;
-
-function updateCamera(){
-  if(freeCam)return;
-  sCamTheta+=(camTheta-sCamTheta)*CAM_SMOOTH;
-  sCamPhi  +=(camPhi  -sCamPhi  )*CAM_SMOOTH;
-  sCamDist +=(camDist -sCamDist )*CAM_SMOOTH;
-  camera.position.set(
-    camTarget.x+sCamDist*Math.sin(sCamPhi)*Math.sin(sCamTheta),
-    camTarget.y+sCamDist*Math.cos(sCamPhi),
-    camTarget.z+sCamDist*Math.sin(sCamPhi)*Math.cos(sCamTheta)
-  );
-  camera.lookAt(camTarget);
-}
-
-renderer.domElement.addEventListener('mousedown',e=>{isDragging=true;prevMouse={x:e.clientX,y:e.clientY}});
-window.addEventListener('mouseup',()=>isDragging=false);
-window.addEventListener('mousemove',e=>{
-  if(!isDragging||freeCam)return;
-  camTheta-=(e.clientX-prevMouse.x)*.004;
-  camPhi=Math.max(.05,Math.min(Math.PI-.05,camPhi-(e.clientY-prevMouse.y)*.004));
-  prevMouse={x:e.clientX,y:e.clientY};
-});
-renderer.domElement.addEventListener('wheel',e=>{
-  camDist=Math.max(1e6,Math.min(400*AU,camDist*Math.exp(e.deltaY*.0008)));
-},{passive:true});
-document.addEventListener('keydown',e=>{if(e.code==='Space')freeCam=!freeCam;});
-
-// ── Body registry ──────────────────────────────────────────────────────────
-const bodies={};
-let focusedBody=null, trailsOn=true, pColorIdx=0;
-let simTime=0, lastSimTime=0, lastWallTime=Date.now();
-
-// Declare ws early so speed slider can reference it
-let ws, reconnectTimer;
-
-// ── Speed slider ───────────────────────────────────────────────────────────
-document.getElementById('speedslider').addEventListener('input',function(){
-  const exp=parseFloat(this.value);
-  const mult=Math.pow(10,exp);
-  const label = exp===0 ? '1× real-time'
-    : exp>0 ? `${mult.toFixed(exp<1?1:0)}× faster`
-    : `${(1/mult).toFixed(1)}× slower`;
-  document.getElementById('speedval').textContent=label;
-  if(ws && ws.readyState===WebSocket.OPEN)
-    ws.send(JSON.stringify({type:'setSpeed',multiplier:mult}));
-});
-
-// Which bodies are moons (orbiting a non-star) — populated as frames arrive
-// key: moon name, value: parent name
-const moonParents = {};
-
-// Orbit rings: one ring per moon, drawn relative to parent position each frame
-const orbitRings = {};   // name → THREE.Line
-let orbitRingsOn = true;
-const ORBIT_SEGS = 128;
-
-function getOrCreateOrbitRing(moonName, parentName, radius, color) {
-  if(orbitRings[moonName]) return orbitRings[moonName];
-  const pts = [];
-  for(let i=0;i<=ORBIT_SEGS;i++){
-    const a = (i/ORBIT_SEGS)*Math.PI*2;
-    pts.push(new THREE.Vector3(Math.cos(a)*radius, 0, Math.sin(a)*radius));
-  }
-  const geo = new THREE.BufferGeometry().setFromPoints(pts);
-  const line = new THREE.Line(geo,
-    new THREE.LineBasicMaterial({color, transparent:true, opacity:0.25}));
-  line.frustumCulled = false;
-  line.visible = orbitRingsOn;
-  scene.add(line);
-  orbitRings[moonName] = line;
-  return line;
-}
-
-function updateOrbitRing(moonName, parentName) {
-  const moon = bodies[moonName], parent = bodies[parentName];
-  if(!moon||!parent) return;
-  const mp = parent.mesh.position;
-  const moonPos = moon.mesh.position;
-  // Radius = current distance from parent in scene units
-  const dx = moonPos.x-mp.x, dy = moonPos.y-mp.y, dz = moonPos.z-mp.z;
-  const r = Math.sqrt(dx*dx+dy*dy+dz*dz);
-  const ring = getOrCreateOrbitRing(moonName, parentName, r, moon.colorInt);
-  // Place ring centered on parent
-  ring.position.copy(mp);
-}
-
-document.getElementById('orbitbtn').addEventListener('click',()=>{
-  orbitRingsOn=!orbitRingsOn;
-  document.getElementById('orbitbtn').classList.toggle('on',orbitRingsOn);
-  document.getElementById('orbitbtn').textContent=orbitRingsOn?'ORBIT RINGS ●':'ORBIT RINGS ○';
-  for(const r of Object.values(orbitRings)) r.visible=orbitRingsOn;
-});
-
-document.getElementById('resetbtn').addEventListener('click',()=>{
-  if(ws && ws.readyState===WebSocket.OPEN){
-    ws.send(JSON.stringify({type:'reset'}));
-    // Clear all scene bodies and trails locally
-    for(const b of Object.values(bodies)){
-      scene.remove(b.mesh);
-      scene.remove(b.trailLine);
+    function starColorFromLuminosity(lum, sp) {
+      const base = SPECTRAL_COLORS[sp] || SPECTRAL_COLORS['G'];
+      const scale = Math.max(0.4, Math.min(1.0, 0.5 + 0.1 * Math.log10(Math.max(1, lum / L_SUN))));
+      return (Math.min(255, ((base >> 16) & 0xff) * scale) | 0) << 16 |
+        (Math.min(255, ((base >> 8) & 0xff) * scale) | 0) << 8 |
+        (Math.min(255, (base & 0xff) * scale) | 0);
     }
-    for(const r of Object.values(orbitRings)) scene.remove(r);
-    Object.keys(bodies).forEach(k=>delete bodies[k]);
-    Object.keys(orbitRings).forEach(k=>delete orbitRings[k]);
-    Object.keys(moonParents).forEach(k=>delete moonParents[k]);
-    document.getElementById('bodylist').innerHTML='';
-    focusedBody=null;
-    updateInfoPanel(null);
-    pColorIdx=0;
-  }
-});
 
-document.getElementById('trailbtn').addEventListener('click',()=>{
-  trailsOn=!trailsOn;
-  document.getElementById('trailbtn').classList.toggle('on',trailsOn);
-  document.getElementById('trailbtn').textContent=trailsOn?'TRAILS ●':'TRAILS ○';
-  for(const b of Object.values(bodies)) b.trailLine.visible=trailsOn;
-});
+    // Per-body appearance: color bands and emissive tint for atmosphere/surface look
+    const BODY_APPEARANCE = {
+      'Mercury': { bands: [0x8c7b6e, 0x7a6a5e, 0x6b5c50], emissive: 0x2a1f18 },
+      'Venus': { bands: [0xe8d5a3, 0xd4b87a, 0xc9a855], emissive: 0x3d2e10 },
+      'Earth': { bands: [0x2a6fdb, 0x1a5c9e, 0x3a8a3a], emissive: 0x061828 },
+      'Mars': { bands: [0xc1440e, 0xa3370a, 0x8b2d08], emissive: 0x2a0d02 },
+      'Jupiter': { bands: [0xc88b5a, 0xb87040, 0xe0c49a, 0xa06030], emissive: 0x1a0d00 },
+      'Saturn': { bands: [0xd4b483, 0xc4a060, 0xe8cc98, 0xb09050], emissive: 0x1a1000 },
+      'Uranus': { bands: [0x7de8e8, 0x5dd4d4, 0x9ef0f0], emissive: 0x003030 },
+      'Neptune': { bands: [0x3f54ba, 0x2a3d9e, 0x5068d0], emissive: 0x000820 },
+      'Moon': { bands: [0x9a9a8e, 0x7a7a6e, 0x8a8a7e], emissive: 0x080808 },
+      'Phobos': { bands: [0x7a6858, 0x6a5848], emissive: 0x080502 },
+      'Deimos': { bands: [0x7a6858, 0x6a5848], emissive: 0x080502 },
+      'Io': { bands: [0xe8c840, 0xd4a020, 0xf0d860, 0xc04820], emissive: 0x201000 },
+      'Europa': { bands: [0xe0d0b8, 0xc8b898, 0xd8c8a8], emissive: 0x101008 },
+      'Ganymede': { bands: [0x8878a0, 0x786890, 0x988888], emissive: 0x080810 },
+      'Callisto': { bands: [0x585070, 0x484060, 0x686080], emissive: 0x080810 },
+      'Titan': { bands: [0xd49040, 0xc07820, 0xe0a850], emissive: 0x201008 },
+      'Enceladus': { bands: [0xe8e8f0, 0xd8d8e8, 0xf0f0ff], emissive: 0x101018 },
+      'Rhea': { bands: [0xb0a898, 0xa09888, 0xc0b8a8], emissive: 0x100e0a },
+    };
+    const FALLBACK_PLANET_COLORS = [0x4a9eff, 0xe8c97a, 0x5cb85c, 0xe06c45, 0xb87333, 0xffd700, 0x7ec8e3, 0x5b7fb0, 0x6a5acd];
 
-function toScene(x,y,z){return new THREE.Vector3(x,z,y);}
+    // ── Renderer ───────────────────────────────────────────────────────────────
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setClearColor(0x000000);
+    document.body.appendChild(renderer.domElement);
 
-function formatSci(v){
-  if(v==null||isNaN(v))return '—';
-  if(Math.abs(v)>=1e27)return (v/1e30).toFixed(3)+'e30';
-  if(Math.abs(v)>=1e24)return (v/1e24).toFixed(3)+'e24';
-  if(Math.abs(v)>=1e20)return (v/1e20).toFixed(3)+'e20';
-  return v.toExponential(3);
-}
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 1e4, 1e16);
+    camera.position.set(0, 3 * AU, 5 * AU);
+    camera.lookAt(0, 0, 0);
 
-function updateInfoPanel(bd){
-  const p=document.getElementById('infopanel');
-  if(!bd){p.classList.remove('visible');return;}
-  p.classList.add('visible');
-  const d=bd.data||{};
-  document.getElementById('ip-name').textContent=d.name||'?';
-  const px=(d.x/KM)|0, py=(d.y/KM)|0, pz=(d.z/KM)|0;
-  document.getElementById('ip-pos').textContent=
-    `${px.toLocaleString()}, ${py.toLocaleString()}, ${pz.toLocaleString()} km`;
-  const spd=Math.sqrt((d.vx||0)**2+(d.vy||0)**2+(d.vz||0)**2)/1e3;
-  document.getElementById('ip-vel').textContent=spd.toFixed(2)+' km/s';
-  document.getElementById('ip-mass').textContent=formatSci(d.mass)+' kg';
-  document.getElementById('ip-radius').textContent=
-    d.radius ? (d.radius/KM).toLocaleString(undefined,{maximumFractionDigits:0})+' km' : '—';
-}
+    scene.add(new THREE.AmbientLight(0xffffff, 0.06));
+    const sunLight = new THREE.PointLight(0xfff4ea, 3.0, 0);
+    scene.add(sunLight);
 
-function getOrCreateBody(d){
-  if(bodies[d.name])return bodies[d.name];
-
-  const isStar=!!d.spectral;
-  const trueR=d.radius||1e6;
-
-  // True scale — no multiplier.
-  // Star minimum: 0.001 AU so Sol is visible at solar-system zoom.
-  // Body minimum: 1e6 m (1000 km) so Phobos/Deimos still render as a dot.
-  const STAR_MIN = 0.001 * AU;
-  const BODY_MIN = 1e6;
-
-  const visR = isStar ? Math.max(trueR, STAR_MIN) : Math.max(trueR, BODY_MIN);
-
-  // Color
-  const app = BODY_APPEARANCE[d.name];
-  const colorInt = isStar
-    ? (d.luminosity ? starColorFromLuminosity(d.luminosity,d.spectral) : (SPECTRAL_COLORS[d.spectral]||SPECTRAL_COLORS['G']))
-    : app ? app.bands[0]
-    : FALLBACK_PLANET_COLORS[(pColorIdx++)%FALLBACK_PLANET_COLORS.length];
-
-  // Build geometry — planets get a multi-band texture baked onto a canvas
-  const geo = new THREE.SphereGeometry(visR, 48, 24);
-  let mat;
-
-  if(!isStar && app){
-    // Bake a latitudinal band texture
-    const tw=512, th=256;
-    const cv=document.createElement('canvas'); cv.width=tw; cv.height=th;
-    const ctx=cv.getContext('2d');
-    const bands=app.bands;
-    const nBands=bands.length;
-    // Fill base
-    ctx.fillStyle='#'+bands[0].toString(16).padStart(6,'0');
-    ctx.fillRect(0,0,tw,th);
-    // Draw horizontal bands with soft edges
-    for(let bi=0;bi<nBands;bi++){
-      const yc=((bi+0.5)/nBands)*th;
-      const bh=(th/nBands)*0.7;
-      const grd=ctx.createLinearGradient(0,yc-bh,0,yc+bh);
-      const c='#'+bands[bi%bands.length].toString(16).padStart(6,'0');
-      const c2='#'+bands[(bi+1)%bands.length].toString(16).padStart(6,'0');
-      grd.addColorStop(0,'rgba(0,0,0,0)');
-      grd.addColorStop(0.3,c+'cc');
-      grd.addColorStop(0.7,c2+'cc');
-      grd.addColorStop(1,'rgba(0,0,0,0)');
-      ctx.fillStyle=grd;
-      ctx.fillRect(0,yc-bh,tw,bh*2);
-    }
-    // Subtle noise overlay for texture
-    for(let px=0;px<2000;px++){
-      const nx=Math.random()*tw, ny=Math.random()*th;
-      const br=Math.random()>.5?1:0;
-      ctx.fillStyle=`rgba(${br?255:0},${br?255:0},${br?255:0},${Math.random()*.08})`;
-      ctx.fillRect(nx,ny,2,1);
-    }
-    const tex=new THREE.CanvasTexture(cv);
-    mat=new THREE.MeshStandardMaterial({
-      map:tex,
-      emissive:app.emissive,
-      emissiveIntensity:0.4,
-      metalness:0,
-      roughness:0.85,
-    });
-  } else if(isStar){
-    // Stars: emissive glow material
-    mat=new THREE.MeshStandardMaterial({
-      color:colorInt, emissive:colorInt, emissiveIntensity:1.0,
-      metalness:0, roughness:1,
-    });
-  } else {
-    // Fallback plain color
-    mat=new THREE.MeshStandardMaterial({
-      color:colorInt, emissive:colorInt, emissiveIntensity:0.1,
-      metalness:0, roughness:0.8,
-    });
-  }
-
-  const mesh=new THREE.Mesh(geo,mat);
-  scene.add(mesh);
-
-  // Trail
-  const trailPos=new Float32Array(TRAIL_LEN*3);
-  const trailGeo=new THREE.BufferGeometry();
-  trailGeo.setAttribute('position',new THREE.BufferAttribute(trailPos,3));
-  trailGeo.setDrawRange(0,0);
-  const trailLine=new THREE.Line(trailGeo,
-    new THREE.LineBasicMaterial({color:colorInt,transparent:true,opacity:0.5}));
-  trailLine.frustumCulled=false;
-  scene.add(trailLine);
-
-  if(isStar) mesh.add(new THREE.PointLight(colorInt,3,0));
-
-  // Label
-  const lcv=document.createElement('canvas'); lcv.width=256; lcv.height=64;
-  const lctx=lcv.getContext('2d');
-  lctx.font='bold 26px system-ui'; lctx.fillStyle='rgba(255,255,255,0.75)';
-  lctx.fillText(d.name,6,42);
-  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(lcv),transparent:true,depthTest:false}));
-  const lblOff=Math.min(visR*2, 0.015*AU);
-  sp.scale.set(lblOff*6,lblOff*1.5,1);
-  sp.position.set(0,lblOff,0);
-  mesh.add(sp);
-
-  const colorHex='#'+colorInt.toString(16).padStart(6,'0');
-  const entry={mesh,trailLine,trailGeo,trailPos,trailHead:0,trailCount:0,trailFrame:0,data:d,colorHex,colorInt};
-  bodies[d.name]=entry;
-
-  const item=document.createElement('div');
-  item.className='body-item'; item.dataset.name=d.name;
-  item.innerHTML=`<div class="body-dot" style="background:${colorHex}"></div>
-    <span class="body-name">${d.name}</span>
-    <span class="body-type">${isStar?'★':'●'}</span>`;
-  item.addEventListener('click',()=>focusBody(d.name));
-  document.getElementById('bodylist').appendChild(item);
-  return entry;
-}
-
-function focusBody(name){
-  focusedBody=name;
-  freeCam=false;
-  // Snap camera target instantly to avoid jitter as we close in
-  if(bodies[name]) camTarget.copy(bodies[name].mesh.position);
-  document.querySelectorAll('.body-item').forEach(el=>el.classList.toggle('active',el.dataset.name===name));
-  updateInfoPanel(bodies[name]);
-}
-
-function applyBodyUpdate(d){
-  const b=getOrCreateBody(d);
-  b.data=d;
-  const pos=toScene(d.x,d.y,d.z);
-  // Register moon→parent relationship for orbit rings
-  if(d.parent && d.parent !== 'Sol') moonParents[d.name] = d.parent;
-
-  b.mesh.position.copy(pos);
-
-  // If this is the focused body, snap camera target to it immediately (no lerp)
-  // This eliminates the jitter caused by the target lagging behind the body
-  if(focusedBody===d.name) camTarget.copy(pos);
-
-  // Trail ring buffer
-  b.trailFrame=(b.trailFrame||0)+1;
-  if(b.trailFrame%TRAIL_SAMPLE===0){
-    const i=b.trailHead*3;
-    b.trailPos[i]=pos.x; b.trailPos[i+1]=pos.y; b.trailPos[i+2]=pos.z;
-    b.trailHead=(b.trailHead+1)%TRAIL_LEN;
-    b.trailCount=Math.min(b.trailCount+1,TRAIL_LEN);
-
-    const ordered=new Float32Array(b.trailCount*3);
-    const start=(b.trailHead-b.trailCount+TRAIL_LEN)%TRAIL_LEN;
-    for(let k=0;k<b.trailCount;k++){
-      const src=((start+k)%TRAIL_LEN)*3;
-      ordered[k*3]=b.trailPos[src]; ordered[k*3+1]=b.trailPos[src+1]; ordered[k*3+2]=b.trailPos[src+2];
-    }
-    b.trailGeo.setAttribute('position',new THREE.BufferAttribute(ordered,3));
-    b.trailGeo.setDrawRange(0,b.trailCount);
-    b.trailGeo.attributes.position.needsUpdate=true;
-  }
-  b.trailLine.visible=trailsOn;
-
-  // Update orbit ring if this is a moon
-  if(moonParents[d.name]) updateOrbitRing(d.name, moonParents[d.name]);
-
-  if(focusedBody===d.name) updateInfoPanel(b);
-}
-
-// ── Render loop ────────────────────────────────────────────────────────────
-function tick(){
-  requestAnimationFrame(tick);
-  if(!freeCam) updateCamera();
-  sunLight.position.copy(camera.position);
-  renderer.render(scene,camera);
-}
-tick();
-
-window.addEventListener('resize',()=>{
-  renderer.setSize(innerWidth,innerHeight);
-  camera.aspect=innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
-});
-
-// ── WebSocket ──────────────────────────────────────────────────────────────
-const WS_URL=`ws://${location.hostname}:9001`;
-const statusEl=document.getElementById('status');
-const simtimeEl=document.getElementById('simtime');
-const speedEl=document.getElementById('speedinfo');
-
-function connect(){
-  ws=new WebSocket(WS_URL);
-  ws.onopen=()=>{statusEl.textContent='LIVE';statusEl.className='connected';};
-  ws.onclose=()=>{
-    statusEl.textContent='RECONNECTING…';statusEl.className='error';
-    clearTimeout(reconnectTimer); reconnectTimer=setTimeout(connect,2000);
-  };
-  ws.onerror=()=>{statusEl.textContent='ERROR';statusEl.className='error';};
-  ws.onmessage=e=>{
-    try{
-      const msg=JSON.parse(e.data);
-      if(msg.type==='frame'){
-        simTime=msg.time;
-        simtimeEl.textContent=formatTime(simTime);
-        const now=Date.now();
-        if(now-lastWallTime>1000){
-          const sf=((simTime-lastSimTime)/(now-lastWallTime)*1000)|0;
-          speedEl.textContent=sf>0?`${fmtSpeed(sf)} real-time`:'';
-          lastSimTime=simTime; lastWallTime=now;
-        }
-        for(const bd of msg.bodies) applyBodyUpdate(bd);
+    // ── Starfield ──────────────────────────────────────────────────────────────
+    (function () {
+      const N = 8000, pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
+      const pal = [[0.78, 0.84, 1], [1, 0.97, 0.9], [1, 0.85, 0.6], [0.9, 0.9, 1]];
+      for (let i = 0; i < N; i++) {
+        const r = 400 * AU, t = Math.random() * Math.PI * 2, p = Math.acos(2 * Math.random() - 1);
+        pos[i * 3] = r * Math.sin(p) * Math.cos(t); pos[i * 3 + 1] = r * Math.sin(p) * Math.sin(t); pos[i * 3 + 2] = r * Math.cos(p);
+        const c = pal[Math.floor(Math.random() * pal.length)], b = .4 + Math.random() * .6;
+        col[i * 3] = c[0] * b; col[i * 3 + 1] = c[1] * b; col[i * 3 + 2] = c[2] * b;
       }
-    }catch(err){}
-  };
-}
-connect();
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      const pts = new THREE.Points(g, new THREE.PointsMaterial({ size: 1.2e9, vertexColors: true, sizeAttenuation: true }));
+      pts.frustumCulled = false;
+      scene.add(pts);
+    })();
 
-function formatTime(s){
-  if(s<3600)return (s|0)+'s';
-  if(s<86400)return ((s/3600)|0)+'h '+((s%3600/60)|0)+'m';
-  if(s<3.156e7)return ((s/86400)|0)+'d';
-  return ((s/3.156e7)|0)+'yr '+((s%3.156e7/86400)|0)+'d';
-}
-function fmtSpeed(x){
-  if(x>86400*365)return ((x/86400/365)|0)+'yr/s';
-  if(x>86400)return ((x/86400)|0)+'d/s';
-  if(x>3600)return ((x/3600)|0)+'h/s';
-  return x+'s/s';
-}
+    // ── Camera controls ────────────────────────────────────────────────────────
+    let isDragging = false, prevMouse = { x: 0, y: 0 };
+    let camTheta = Math.atan2(5, 3), camPhi = Math.PI / 3, camDist = 7 * AU;
+    let sCamTheta = camTheta, sCamPhi = camPhi, sCamDist = camDist;
+    let camTarget = new THREE.Vector3(), freeCam = false;
+    const CAM_SMOOTH = 0.12;
 
-// ── Demo mode ──────────────────────────────────────────────────────────────
-let demoTime=0;
-setTimeout(()=>{
-  if(statusEl.className==='connected')return;
-  statusEl.textContent='DEMO'; statusEl.style.background='rgba(200,160,40,.15)'; statusEl.style.color='#c8a028';
-  setInterval(()=>{
-    if(statusEl.className==='connected')return;
-    const moon_angle=demoTime*13.37*(Math.PI/180);
-    const ex=Math.cos(demoTime*0.01724)*AU, ez=Math.sin(demoTime*0.01724)*AU;
-    const frames=[
-      {name:'Sol',x:0,y:0,z:0,vx:0,vy:0,vz:0,mass:1.989e30,radius:6.957e8,spectral:'G',luminosity:3.828e26},
-      {name:'Earth',x:ex,y:0,z:ez,vx:0,vy:29783,vz:0,mass:5.972e24,radius:6.371e6},
-      {name:'Moon',x:ex+Math.cos(moon_angle)*3.844e8,y:0,z:ez+Math.sin(moon_angle)*3.844e8,
-       vx:0,vy:30783,vz:0,mass:7.342e22,radius:1.737e6},
-      {name:'Mars',x:Math.cos(demoTime*0.00914)*1.524*AU,y:0,z:Math.sin(demoTime*0.00914)*1.524*AU,
-       vx:0,vy:24077,vz:0,mass:6.39e23,radius:3.390e6},
-    ];
-    demoTime+=1;
-    simtimeEl.textContent=formatTime(demoTime*86400);
-    for(const bd of frames) applyBodyUpdate(bd);
-  },50);
-},1500);
-</script>
+    function updateCamera() {
+      if (freeCam) return;
+      sCamTheta += (camTheta - sCamTheta) * CAM_SMOOTH;
+      sCamPhi += (camPhi - sCamPhi) * CAM_SMOOTH;
+      sCamDist += (camDist - sCamDist) * CAM_SMOOTH;
+      camera.position.set(
+        camTarget.x + sCamDist * Math.sin(sCamPhi) * Math.sin(sCamTheta),
+        camTarget.y + sCamDist * Math.cos(sCamPhi),
+        camTarget.z + sCamDist * Math.sin(sCamPhi) * Math.cos(sCamTheta)
+      );
+      camera.lookAt(camTarget);
+    }
+
+    renderer.domElement.addEventListener('mousedown', e => { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY } });
+    window.addEventListener('mouseup', () => isDragging = false);
+    window.addEventListener('mousemove', e => {
+      if (!isDragging || freeCam) return;
+      camTheta -= (e.clientX - prevMouse.x) * .004;
+      camPhi = Math.max(.05, Math.min(Math.PI - .05, camPhi - (e.clientY - prevMouse.y) * .004));
+      prevMouse = { x: e.clientX, y: e.clientY };
+    });
+    renderer.domElement.addEventListener('wheel', e => {
+      camDist = Math.max(1e6, Math.min(400 * AU, camDist * Math.exp(e.deltaY * .0008)));
+    }, { passive: true });
+    document.addEventListener('keydown', e => { if (e.code === 'Space') freeCam = !freeCam; });
+
+    // ── Body registry ──────────────────────────────────────────────────────────
+    const bodies = {};
+    let focusedBody = null, trailsOn = true, pColorIdx = 0;
+    let simTime = 0, lastSimTime = 0, lastWallTime = Date.now();
+
+    // Declare ws early so speed slider can reference it
+    let ws, reconnectTimer;
+
+    // ── Speed slider ───────────────────────────────────────────────────────────
+    document.getElementById('speedslider').addEventListener('input', function () {
+      const exp = parseFloat(this.value);
+      const mult = Math.pow(10, exp);
+      const label = exp === 0 ? '1× real-time'
+        : exp > 0 ? `${mult.toFixed(exp < 1 ? 1 : 0)}× faster`
+          : `${(1 / mult).toFixed(1)}× slower`;
+      document.getElementById('speedval').textContent = label;
+      if (ws && ws.readyState === WebSocket.OPEN)
+        ws.send(JSON.stringify({ type: 'setSpeed', multiplier: mult }));
+    });
+
+    // Which bodies are moons (orbiting a non-star) — populated as frames arrive
+    // key: moon name, value: parent name
+    const moonParents = {};
+
+    // Orbit rings: one ring per moon, drawn relative to parent position each frame
+    const orbitRings = {};   // name → THREE.Line
+    let orbitRingsOn = true;
+    const ORBIT_SEGS = 128;
+
+    function getOrCreateOrbitRing(moonName, parentName, radius, color) {
+      if (orbitRings[moonName]) return orbitRings[moonName];
+      const pts = [];
+      for (let i = 0; i <= ORBIT_SEGS; i++) {
+        const a = (i / ORBIT_SEGS) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(a) * radius, 0, Math.sin(a) * radius));
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      const line = new THREE.Line(geo,
+        new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.25 }));
+      line.frustumCulled = false;
+      line.visible = orbitRingsOn;
+      scene.add(line);
+      orbitRings[moonName] = line;
+      return line;
+    }
+
+    function updateOrbitRing(moonName, parentName) {
+      const moon = bodies[moonName], parent = bodies[parentName];
+      if (!moon || !parent) return;
+      const mp = parent.mesh.position;
+      const moonPos = moon.mesh.position;
+      // Radius = current distance from parent in scene units
+      const dx = moonPos.x - mp.x, dy = moonPos.y - mp.y, dz = moonPos.z - mp.z;
+      const r = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      const ring = getOrCreateOrbitRing(moonName, parentName, r, moon.colorInt);
+      // Place ring centered on parent
+      ring.position.copy(mp);
+    }
+
+    document.getElementById('orbitbtn').addEventListener('click', () => {
+      orbitRingsOn = !orbitRingsOn;
+      document.getElementById('orbitbtn').classList.toggle('on', orbitRingsOn);
+      document.getElementById('orbitbtn').textContent = orbitRingsOn ? 'ORBIT RINGS ●' : 'ORBIT RINGS ○';
+      for (const r of Object.values(orbitRings)) r.visible = orbitRingsOn;
+    });
+
+    document.getElementById('resetbtn').addEventListener('click', () => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'reset' }));
+        // Clear all scene bodies and trails locally
+        for (const b of Object.values(bodies)) {
+          scene.remove(b.mesh);
+          scene.remove(b.trailLine);
+        }
+        for (const r of Object.values(orbitRings)) scene.remove(r);
+        Object.keys(bodies).forEach(k => delete bodies[k]);
+        Object.keys(orbitRings).forEach(k => delete orbitRings[k]);
+        Object.keys(moonParents).forEach(k => delete moonParents[k]);
+        document.getElementById('bodylist').innerHTML = '';
+        focusedBody = null;
+        updateInfoPanel(null);
+        pColorIdx = 0;
+      }
+    });
+
+    document.getElementById('trailbtn').addEventListener('click', () => {
+      trailsOn = !trailsOn;
+      document.getElementById('trailbtn').classList.toggle('on', trailsOn);
+      document.getElementById('trailbtn').textContent = trailsOn ? 'TRAILS ●' : 'TRAILS ○';
+      for (const b of Object.values(bodies)) b.trailLine.visible = trailsOn;
+    });
+
+    function toScene(x, y, z) { return new THREE.Vector3(x, z, y); }
+
+    function formatSci(v) {
+      if (v == null || isNaN(v)) return '—';
+      if (Math.abs(v) >= 1e27) return (v / 1e30).toFixed(3) + 'e30';
+      if (Math.abs(v) >= 1e24) return (v / 1e24).toFixed(3) + 'e24';
+      if (Math.abs(v) >= 1e20) return (v / 1e20).toFixed(3) + 'e20';
+      return v.toExponential(3);
+    }
+
+    function updateInfoPanel(bd) {
+      const p = document.getElementById('infopanel');
+      if (!bd) { p.classList.remove('visible'); return; }
+      p.classList.add('visible');
+      const d = bd.data || {};
+      document.getElementById('ip-name').textContent = d.name || '?';
+      const px = (d.x / KM) | 0, py = (d.y / KM) | 0, pz = (d.z / KM) | 0;
+      document.getElementById('ip-pos').textContent =
+        `${px.toLocaleString()}, ${py.toLocaleString()}, ${pz.toLocaleString()} km`;
+      const spd = Math.sqrt((d.vx || 0) ** 2 + (d.vy || 0) ** 2 + (d.vz || 0) ** 2) / 1e3;
+      document.getElementById('ip-vel').textContent = spd.toFixed(2) + ' km/s';
+      document.getElementById('ip-mass').textContent = formatSci(d.mass) + ' kg';
+      document.getElementById('ip-radius').textContent =
+        d.radius ? (d.radius / KM).toLocaleString(undefined, { maximumFractionDigits: 0 }) + ' km' : '—';
+    }
+
+    function getOrCreateBody(d) {
+      if (bodies[d.name]) return bodies[d.name];
+
+      const isStar = !!d.spectral;
+      const trueR = d.radius || 1e6;
+
+      // True scale — no multiplier.
+      // Star minimum: 0.001 AU so Sol is visible at solar-system zoom.
+      // Body minimum: 1e6 m (1000 km) so Phobos/Deimos still render as a dot.
+      const STAR_MIN = 0.001 * AU;
+      const BODY_MIN = 1e6;
+
+      const visR = isStar ? Math.max(trueR, STAR_MIN) : Math.max(trueR, BODY_MIN);
+
+      // Color
+      const app = BODY_APPEARANCE[d.name];
+      const colorInt = isStar
+        ? (d.luminosity ? starColorFromLuminosity(d.luminosity, d.spectral) : (SPECTRAL_COLORS[d.spectral] || SPECTRAL_COLORS['G']))
+        : app ? app.bands[0]
+          : FALLBACK_PLANET_COLORS[(pColorIdx++) % FALLBACK_PLANET_COLORS.length];
+
+      // Build geometry — planets get a multi-band texture baked onto a canvas
+      const geo = new THREE.SphereGeometry(visR, 48, 24);
+      let mat;
+
+      if (!isStar && app) {
+        // Bake a latitudinal band texture
+        const tw = 512, th = 256;
+        const cv = document.createElement('canvas'); cv.width = tw; cv.height = th;
+        const ctx = cv.getContext('2d');
+        const bands = app.bands;
+        const nBands = bands.length;
+        // Fill base
+        ctx.fillStyle = '#' + bands[0].toString(16).padStart(6, '0');
+        ctx.fillRect(0, 0, tw, th);
+        // Draw horizontal bands with soft edges
+        for (let bi = 0; bi < nBands; bi++) {
+          const yc = ((bi + 0.5) / nBands) * th;
+          const bh = (th / nBands) * 0.7;
+          const grd = ctx.createLinearGradient(0, yc - bh, 0, yc + bh);
+          const c = '#' + bands[bi % bands.length].toString(16).padStart(6, '0');
+          const c2 = '#' + bands[(bi + 1) % bands.length].toString(16).padStart(6, '0');
+          grd.addColorStop(0, 'rgba(0,0,0,0)');
+          grd.addColorStop(0.3, c + 'cc');
+          grd.addColorStop(0.7, c2 + 'cc');
+          grd.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = grd;
+          ctx.fillRect(0, yc - bh, tw, bh * 2);
+        }
+        // Subtle noise overlay for texture
+        for (let px = 0; px < 2000; px++) {
+          const nx = Math.random() * tw, ny = Math.random() * th;
+          const br = Math.random() > .5 ? 1 : 0;
+          ctx.fillStyle = `rgba(${br ? 255 : 0},${br ? 255 : 0},${br ? 255 : 0},${Math.random() * .08})`;
+          ctx.fillRect(nx, ny, 2, 1);
+        }
+        const tex = new THREE.CanvasTexture(cv);
+        mat = new THREE.MeshStandardMaterial({
+          map: tex,
+          emissive: app.emissive,
+          emissiveIntensity: 0.4,
+          metalness: 0,
+          roughness: 0.85,
+        });
+      } else if (isStar) {
+        // Stars: emissive glow material
+        mat = new THREE.MeshStandardMaterial({
+          color: colorInt, emissive: colorInt, emissiveIntensity: 1.0,
+          metalness: 0, roughness: 1,
+        });
+      } else {
+        // Fallback plain color
+        mat = new THREE.MeshStandardMaterial({
+          color: colorInt, emissive: colorInt, emissiveIntensity: 0.1,
+          metalness: 0, roughness: 0.8,
+        });
+      }
+
+      const mesh = new THREE.Mesh(geo, mat);
+      scene.add(mesh);
+
+      // Trail
+      const trailPos = new Float32Array(TRAIL_LEN * 3);
+      const trailGeo = new THREE.BufferGeometry();
+      trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3));
+      trailGeo.setDrawRange(0, 0);
+      const trailLine = new THREE.Line(trailGeo,
+        new THREE.LineBasicMaterial({ color: colorInt, transparent: true, opacity: 0.5 }));
+      trailLine.frustumCulled = false;
+      scene.add(trailLine);
+
+      if (isStar) mesh.add(new THREE.PointLight(colorInt, 3, 0));
+
+      // Label
+      const lcv = document.createElement('canvas'); lcv.width = 256; lcv.height = 64;
+      const lctx = lcv.getContext('2d');
+      lctx.font = 'bold 26px system-ui'; lctx.fillStyle = 'rgba(255,255,255,0.75)';
+      lctx.fillText(d.name, 6, 42);
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(lcv), transparent: true, depthTest: false }));
+      const lblOff = Math.min(visR * 2, 0.015 * AU);
+      sp.scale.set(lblOff * 6, lblOff * 1.5, 1);
+      sp.position.set(0, lblOff, 0);
+      mesh.add(sp);
+
+      const colorHex = '#' + colorInt.toString(16).padStart(6, '0');
+      const entry = { mesh, trailLine, trailGeo, trailPos, trailHead: 0, trailCount: 0, trailFrame: 0, data: d, colorHex, colorInt };
+      bodies[d.name] = entry;
+
+      const item = document.createElement('div');
+      item.className = 'body-item'; item.dataset.name = d.name;
+      item.innerHTML = `<div class="body-dot" style="background:${colorHex}"></div>
+    <span class="body-name">${d.name}</span>
+    <span class="body-type">${isStar ? '★' : '●'}</span>`;
+      item.addEventListener('click', () => focusBody(d.name));
+      document.getElementById('bodylist').appendChild(item);
+      return entry;
+    }
+
+    function focusBody(name) {
+      focusedBody = name;
+      freeCam = false;
+      // Snap camera target instantly to avoid jitter as we close in
+      if (bodies[name]) camTarget.copy(bodies[name].mesh.position);
+      document.querySelectorAll('.body-item').forEach(el => el.classList.toggle('active', el.dataset.name === name));
+      updateInfoPanel(bodies[name]);
+    }
+
+    function applyBodyUpdate(d) {
+      const b = getOrCreateBody(d);
+      b.data = d;
+      const pos = toScene(d.x, d.y, d.z);
+      // Register moon→parent relationship for orbit rings
+      if (d.parent && d.parent !== 'Sol') moonParents[d.name] = d.parent;
+
+      b.mesh.position.copy(pos);
+
+      // If this is the focused body, snap camera target to it immediately (no lerp)
+      // This eliminates the jitter caused by the target lagging behind the body
+      if (focusedBody === d.name) camTarget.copy(pos);
+
+      // Trail ring buffer
+      b.trailFrame = (b.trailFrame || 0) + 1;
+      if (b.trailFrame % TRAIL_SAMPLE === 0) {
+        const i = b.trailHead * 3;
+        b.trailPos[i] = pos.x; b.trailPos[i + 1] = pos.y; b.trailPos[i + 2] = pos.z;
+        b.trailHead = (b.trailHead + 1) % TRAIL_LEN;
+        b.trailCount = Math.min(b.trailCount + 1, TRAIL_LEN);
+
+        const ordered = new Float32Array(b.trailCount * 3);
+        const start = (b.trailHead - b.trailCount + TRAIL_LEN) % TRAIL_LEN;
+        for (let k = 0; k < b.trailCount; k++) {
+          const src = ((start + k) % TRAIL_LEN) * 3;
+          ordered[k * 3] = b.trailPos[src]; ordered[k * 3 + 1] = b.trailPos[src + 1]; ordered[k * 3 + 2] = b.trailPos[src + 2];
+        }
+        b.trailGeo.setAttribute('position', new THREE.BufferAttribute(ordered, 3));
+        b.trailGeo.setDrawRange(0, b.trailCount);
+        b.trailGeo.attributes.position.needsUpdate = true;
+      }
+      b.trailLine.visible = trailsOn;
+
+      // Update orbit ring if this is a moon
+      if (moonParents[d.name]) updateOrbitRing(d.name, moonParents[d.name]);
+
+      if (focusedBody === d.name) updateInfoPanel(b);
+    }
+
+    // ── Render loop ────────────────────────────────────────────────────────────
+    function tick() {
+      requestAnimationFrame(tick);
+      if (!freeCam) updateCamera();
+      sunLight.position.copy(camera.position);
+      renderer.render(scene, camera);
+    }
+    tick();
+
+    window.addEventListener('resize', () => {
+      renderer.setSize(innerWidth, innerHeight);
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+    });
+
+    // ── WebSocket ──────────────────────────────────────────────────────────────
+    const WS_URL = `ws://${location.hostname}:9001`;
+    const statusEl = document.getElementById('status');
+    const simtimeEl = document.getElementById('simtime');
+    const speedEl = document.getElementById('speedinfo');
+
+    function connect() {
+      ws = new WebSocket(WS_URL);
+      ws.onopen = () => { statusEl.textContent = 'LIVE'; statusEl.className = 'connected'; };
+      ws.onclose = () => {
+        statusEl.textContent = 'RECONNECTING…'; statusEl.className = 'error';
+        clearTimeout(reconnectTimer); reconnectTimer = setTimeout(connect, 2000);
+      };
+      ws.onerror = () => { statusEl.textContent = 'ERROR'; statusEl.className = 'error'; };
+      ws.onmessage = e => {
+        try {
+          const msg = JSON.parse(e.data);
+          if (msg.type === 'frame') {
+            simTime = msg.time;
+            simtimeEl.textContent = formatTime(simTime);
+            const now = Date.now();
+            if (now - lastWallTime > 1000) {
+              const sf = ((simTime - lastSimTime) / (now - lastWallTime) * 1000) | 0;
+              speedEl.textContent = sf > 0 ? `${fmtSpeed(sf)} real-time` : '';
+              lastSimTime = simTime; lastWallTime = now;
+            }
+            for (const bd of msg.bodies) applyBodyUpdate(bd);
+          }
+        } catch (err) { }
+      };
+    }
+    connect();
+
+    function formatTime(s) {
+      if (s < 3600) return (s | 0) + 's';
+      if (s < 86400) return ((s / 3600) | 0) + 'h ' + ((s % 3600 / 60) | 0) + 'm';
+      if (s < 3.156e7) return ((s / 86400) | 0) + 'd';
+      return ((s / 3.156e7) | 0) + 'yr ' + ((s % 3.156e7 / 86400) | 0) + 'd';
+    }
+    function fmtSpeed(x) {
+      if (x > 86400 * 365) return ((x / 86400 / 365) | 0) + 'yr/s';
+      if (x > 86400) return ((x / 86400) | 0) + 'd/s';
+      if (x > 3600) return ((x / 3600) | 0) + 'h/s';
+      return x + 's/s';
+    }
+
+    // ── Demo mode ──────────────────────────────────────────────────────────────
+    let demoTime = 0;
+    setTimeout(() => {
+      if (statusEl.className === 'connected') return;
+      statusEl.textContent = 'DEMO'; statusEl.style.background = 'rgba(200,160,40,.15)'; statusEl.style.color = '#c8a028';
+      setInterval(() => {
+        if (statusEl.className === 'connected') return;
+        const moon_angle = demoTime * 13.37 * (Math.PI / 180);
+        const ex = Math.cos(demoTime * 0.01724) * AU, ez = Math.sin(demoTime * 0.01724) * AU;
+        const frames = [
+          { name: 'Sol', x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, mass: 1.989e30, radius: 6.957e8, spectral: 'G', luminosity: 3.828e26 },
+          { name: 'Earth', x: ex, y: 0, z: ez, vx: 0, vy: 29783, vz: 0, mass: 5.972e24, radius: 6.371e6 },
+          {
+            name: 'Moon', x: ex + Math.cos(moon_angle) * 3.844e8, y: 0, z: ez + Math.sin(moon_angle) * 3.844e8,
+            vx: 0, vy: 30783, vz: 0, mass: 7.342e22, radius: 1.737e6
+          },
+          {
+            name: 'Mars', x: Math.cos(demoTime * 0.00914) * 1.524 * AU, y: 0, z: Math.sin(demoTime * 0.00914) * 1.524 * AU,
+            vx: 0, vy: 24077, vz: 0, mass: 6.39e23, radius: 3.390e6
+          },
+        ];
+        demoTime += 1;
+        simtimeEl.textContent = formatTime(demoTime * 86400);
+        for (const bd of frames) applyBodyUpdate(bd);
+      }, 50);
+    }, 1500);
+  </script>
 </body>
+
 </html>
